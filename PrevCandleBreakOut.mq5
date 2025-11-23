@@ -92,6 +92,10 @@ input group "=== Max Daily Trades ==="
 input bool            UseMaxDailyTrades  = true;    // Use Max Daily Trades
 input int             MaxDailyTrades     = 3;       // Max Trades Per Day
 
+//--- Input Parameters - Max Concurrent Trades
+input group "=== Max Concurrent Trades ==="
+input int             MaxConcurrentTrades = 1;      // Max Concurrent Trades (0=unlimited)
+
 //--- Input Parameters - Break Even
 input group "=== Break Even ==="
 input bool            UseBreakEven       = true;    // Use Break Even
@@ -442,20 +446,24 @@ void CheckEntrySignals()
 }
 
 //+------------------------------------------------------------------+
-//| Check if we already have an open position                         |
+//| Check if max concurrent trades reached                            |
 //+------------------------------------------------------------------+
 bool HasOpenPosition()
 {
+   //--- If unlimited, never block
+   if(MaxConcurrentTrades <= 0) return false;
+
+   int count = 0;
    for(int i = PositionsTotal() - 1; i >= 0; i--)
    {
       CPositionInfo pos;
       if(pos.SelectByIndex(i))
       {
          if(pos.Symbol() == _Symbol && pos.Magic() == MagicNumber)
-            return true;
+            count++;
       }
    }
-   return false;
+   return (count >= MaxConcurrentTrades);
 }
 
 //+------------------------------------------------------------------+
