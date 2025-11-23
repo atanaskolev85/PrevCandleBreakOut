@@ -78,6 +78,15 @@ input ENUM_MINUTE     StartMinute        = M_00;    // Start Minute
 input ENUM_HOUR       EndHour            = H_20;    // End Hour
 input ENUM_MINUTE     EndMinute          = M_00;    // End Minute
 
+//--- Input Parameters - Day Filter
+input group "=== Day Filter ==="
+input bool            UseDayFilter       = true;    // Use Day Filter
+input bool            TradeMonday        = true;    // Trade on Monday
+input bool            TradeTuesday       = true;    // Trade on Tuesday
+input bool            TradeWednesday     = true;    // Trade on Wednesday
+input bool            TradeThursday      = true;    // Trade on Thursday
+input bool            TradeFriday        = true;    // Trade on Friday
+
 //--- Input Parameters - Max Daily Trades
 input group "=== Max Daily Trades ==="
 input bool            UseMaxDailyTrades  = true;    // Use Max Daily Trades
@@ -190,6 +199,28 @@ bool IsTimeOK()
    }
 
    return (currentMinutes >= startMinutes && currentMinutes < endMinutes);
+}
+
+//+------------------------------------------------------------------+
+//| Check Day Filter                                                   |
+//+------------------------------------------------------------------+
+bool IsDayOK()
+{
+   if(!UseDayFilter) return true;
+
+   MqlDateTime dt;
+   TimeCurrent(dt);
+
+   //--- dt.day_of_week: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
+   switch(dt.day_of_week)
+   {
+      case 1: return TradeMonday;
+      case 2: return TradeTuesday;
+      case 3: return TradeWednesday;
+      case 4: return TradeThursday;
+      case 5: return TradeFriday;
+      default: return false; // Weekend (Saturday/Sunday)
+   }
 }
 
 //+------------------------------------------------------------------+
@@ -362,6 +393,11 @@ void CheckEntrySignals()
    if(!IsTimeOK())
    {
       return; // Silent skip for time filter
+   }
+
+   if(!IsDayOK())
+   {
+      return; // Silent skip for day filter
    }
 
    if(!CanTradeToday())
